@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>r1_mini</name>
+  <version>0.1.0</version>
+  <description>Metapackage for R1 Mini robot - includes full setup</description>
+  <maintainer email="akarsh.hirennavar@artpark.in">Akarsh</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <!-- From micro_ros_setup -->
+  <depend>curl</depend>
+  <depend>python3-yaml</depend>
+  <depend>clang-tidy</depend>
+  <buildtool_depend>asio</buildtool_depend>
+  <buildtool_depend>tinyxml2</buildtool_depend>
+  <build_depend>flex</build_depend>
+  <build_depend>bison</build_depend>
+  <build_depend>libncurses-dev</build_depend>
+  <build_depend>usbutils</build_depend>
+  <exec_depend>python3-vcstool</exec_depend>
+
+  <!-- From micro_ros_agent -->
+  <depend>rmw</depend>
+  <depend>rcutils</depend>
+  <depend>rmw_fastrtps_shared_cpp</depend>
+  <depend>rmw_dds_common</depend>
+
+  <!-- From micro_ros_msgs -->
+  <build_depend>rosidl_default_generators</build_depend>
+  <exec_depend>rosidl_default_runtime</exec_depend>
+  
+  <!-- Dependencies -->
+  <exec_depend>xacro</exec_depend>
+  <exec_depend>robot_localization</exec_depend>
+  <exec_depend>nav2_bringup</exec_depend>
+  <exec_depend>slam_toolbox</exec_depend>
+
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
