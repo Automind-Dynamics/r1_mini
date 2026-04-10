@@ -2,7 +2,13 @@
 set -e
 set -o pipefail
 
-WS_DIR=~/r1_ws
+# === User Configuration ===
+read -p "Enter robot name (e.g. r1a001): " ROBOT_NAME
+read -p "Enter workspace name [default: r1_ws]: " WS_NAME
+WS_NAME=${WS_NAME:-r1_ws}
+WS_DIR=~/$WS_NAME
+echo "  Workspace: $WS_DIR (will be created if it does not exist)"
+echo ""
 
 echo "=== [r1_mini] Starting full micro-ROS setup ==="
 
@@ -69,6 +75,15 @@ else
     echo "  realsense-ros already present, skipping clone"
 fi
 
+# Step 9: Configure robot name in required files
+echo ""
+echo "=== [9/9] Configuring robot name: $ROBOT_NAME ==="
+sed -i "s|/r1a001/cmd_vel|/$ROBOT_NAME/cmd_vel|g" \
+    $WS_DIR/src/r1_packages/r1_teleop/launch/twist_mux_launch.py
+sed -i "s|/r1a001/wheel_odom|/$ROBOT_NAME/wheel_odom|g" \
+    $WS_DIR/src/r1_packages/r1_localization/config/ekf.yaml
+echo "  Robot name set to '$ROBOT_NAME' in launch and config files."
+
 # Step 6: rosdep install for newly added packages
 echo "=== [6/7] Running rosdep install for new packages ==="
 rosdep install --from-paths src --ignore-src --skip-keys=librealsense2 -y
@@ -76,7 +91,7 @@ rosdep install --from-paths src --ignore-src --skip-keys=librealsense2 -y
 # Step 7: Build
 echo "=== [7/7] Building workspace ==="
 source $WS_DIR/install/local_setup.bash
- 
+
 echo "  Building r1* packages with symlink install..."
 colcon build --packages-select-regex 'r1.*' --symlink-install
 
@@ -87,9 +102,56 @@ echo ""
 echo "=== [r1_mini] Setup complete! ==="
 echo "Run: source $WS_DIR/install/local_setup.bash"
 
-
 echo "=== [8/8] Installing udev rules ==="
 sudo cp $WS_DIR/src/r1_mini/99-r1mini.rules /etc/udev/rules.d/99-r1mini.rules
 sudo udevadm control --reload-rules
 sudo udevadm trigger
 echo "  udev rules installed and applied."
+
+# Step 10: Install xpad joystick driver via DKMS
+echo ""
+echo "=== [10/10] Installing xpad joystick driver ==="
+if [ ! -d ~/Downloads/xpad ]; then
+    git clone https://github.com/paroj/xpad.git ~/Downloads/xpad
+else
+    echo "  xpad already cloned, skipping."
+fi
+cat > ~/Downloads/xpad/dkms.conf << 'EOF'
+PACKAGE_NAME="xpad"
+PACKAGE_VERSION="0.4"
+CLEAN="make clean"
+BUILT_MODULE_NAME[0]="xpad"
+DEST_MODULE_LOCATION[0]="/kernel/drivers/input/joystick"
+AUTOINSTALL="yes"
+MAKE[0]="make all KVERSION=$kernelver"
+EOF
+sudo mkdir -p /usr/src/xpad-0.4
+sudo cp -r ~/Downloads/xpad/* /usr/src/xpad-0.4/
+sudo apt-get install dkms -y
+sudo dkms add -m xpad -v 0.4 || true
+sudo dkms build -m xpad -v 0.4
+sudo dkms install -m xpad -v 0.4
+sudo modprobe xpad
+echo "  xpad driver installed. Joystick available at /dev/input/js0"
+rm -rf ~/Downloads/xpad
+echo "  Cleaned up xpad source from Downloads."
+
+# Step 11: Install utilities
+echo ""
+echo "=== [11/11] Installing utilities (terminator, nano, gedit, brave, etc.) ==="
+sudo apt install -y terminator nano gedit
+curl -fsS https://dl.brave.com/install.sh | sh
+echo "  Utilities installed."
+
+# Step 12: Add workspace source to ~/.bashrc
+echo ""
+echo "=== [12/12] Adding workspace source to ~/.bashrc ==="
+WS_SOURCE_LINE="source $WS_DIR/install/local_setup.bash"
+if ! grep -qF "${WS_SOURCE_LINE}" ~/.bashrc; then
+    echo "" >> ~/.bashrc
+    echo "# R1 Mini workspace — $WS_NAME" >> ~/.bashrc
+    echo "${WS_SOURCE_LINE}" >> ~/.bashrc
+    echo "  Added to ~/.bashrc"
+else
+    echo "  Already present in ~/.bashrc, skipping."
+fi
