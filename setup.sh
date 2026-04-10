@@ -76,7 +76,7 @@ rosdep install --from-paths src --ignore-src --skip-keys=librealsense2 -y
 # Step 7: Build
 echo "=== [7/7] Building workspace ==="
 source $WS_DIR/install/local_setup.bash
-
+ 
 echo "  Building r1* packages with symlink install..."
 colcon build --packages-select-regex 'r1.*' --symlink-install
 
@@ -89,7 +89,7 @@ echo "Run: source $WS_DIR/install/local_setup.bash"
 
 
 echo "=== [8/8] Installing udev rules ==="
-sudo cp $WS_DIR/src/r1mini/99-r1mini.rules /etc/udev/rules.d/99-r1mini.rules
+sudo cp $WS_DIR/src/r1_mini/99-r1mini.rules /etc/udev/rules.d/99-r1mini.rules
 sudo udevadm control --reload-rules
 sudo udevadm trigger
 echo "  udev rules installed and applied."
