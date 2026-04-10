@@ -36,6 +36,7 @@
   <exec_depend>robot_localization</exec_depend>
   <exec_depend>nav2_bringup</exec_depend>
   <exec_depend>slam_toolbox</exec_depend>
+  <exec_depend>twist_mux</exec_depend>
 
 
   <export>

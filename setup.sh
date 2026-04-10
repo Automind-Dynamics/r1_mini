@@ -53,7 +53,7 @@ else
 fi
 
 if [ ! -d "$WS_DIR/src/rplidar_ros" ]; then
-    git clone -b ros2-devel \
+    git clone -b ros2 \
         https://github.com/Slamtec/rplidar_ros.git \
         $WS_DIR/src/rplidar_ros
 else
@@ -85,3 +85,10 @@ colcon build --packages-ignore-regex 'r1.*' 'micro_ros_setup' 'micro_ros_msgs' '
 echo ""
 echo "=== [r1_mini] Setup complete! ==="
 echo "Run: source $WS_DIR/install/local_setup.bash"
+
+
+echo "=== [8/8] Installing udev rules ==="
+sudo cp "$(dirname "${BASH_SOURCE[0]}")/99-r1mini.rules" /etc/udev/rules.d/99-r1mini.rules
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+echo "  udev rules installed and applied."
