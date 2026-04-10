@@ -21,8 +21,9 @@ cd $WS_DIR
 # Step 2: rosdep install for micro_ros_setup + r1mini deps
 echo "=== [2/7] Running rosdep install ==="
 sudo apt update
+sudo rosdep init || true
 rosdep update
-rosdep install --from-paths src --ignore-src -y
+rosdep install --from-paths src --ignore-src --skip-keys=librealsense2 -y
 
 # Step 3: Build micro_ros_setup
 echo "=== [3/7] Building micro_ros_setup ==="
@@ -88,7 +89,7 @@ echo "Run: source $WS_DIR/install/local_setup.bash"
 
 
 echo "=== [8/8] Installing udev rules ==="
-sudo cp "$(dirname "${BASH_SOURCE[0]}")/99-r1mini.rules" /etc/udev/rules.d/99-r1mini.rules
+sudo cp $WS_DIR/src/r1mini/99-r1mini.rules /etc/udev/rules.d/99-r1mini.rules
 sudo udevadm control --reload-rules
 sudo udevadm trigger
 echo "  udev rules installed and applied."
