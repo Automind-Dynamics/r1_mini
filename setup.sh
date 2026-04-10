@@ -2,7 +2,7 @@
 set -e
 set -o pipefail
 
-WS_DIR=~/test_microros_ws
+WS_DIR=~/r1_ws
 
 echo "=== [r1_mini] Starting full micro-ROS setup ==="
 
