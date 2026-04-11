@@ -2,6 +2,36 @@
 set -e
 set -o pipefail
 
+
+# === Prerequisite Check: Intel RealSense SDK ===
+read -p "Prerequisite: Is Intel RealSense SDK installed? (y/n): " SDK_INSTALLED
+if [[ "$SDK_INSTALLED" != "y" && "$SDK_INSTALLED" != "Y" ]]; then
+    echo ""
+    echo "Please install the Intel RealSense SDK first, then re-run this script."
+    echo ""
+    echo "Follow these instructions:"
+    echo ""
+    echo "  cd ~"
+    echo "  git clone https://github.com/jetsonhacks/jetson-orin-librealsense.git"
+    echo "  cd jetson-orin-librealsense"
+    echo ""
+    echo "  # Kernel modules"
+    echo "  sha256sum -c install-modules.tar.gz.sha256"
+    echo "  tar -xzf install-modules.tar.gz"
+    echo "  cd install-modules && sudo ./install-realsense-modules.sh && cd .."
+    echo "  sudo reboot"
+    echo ""
+    echo "  # Intel SDK (after reboot)"
+    echo "  sudo mkdir -p /etc/apt/keyrings"
+    echo "  curl -sSf https://librealsense.realsenseai.com/Debian/librealsenseai.asc | sudo gpg --dearmor | sudo tee /etc/apt/keyrings/librealsenseai.gpg > /dev/null"
+    echo "  echo "deb [signed-by=/etc/apt/keyrings/librealsenseai.gpg] https://librealsense.realsenseai.com/Debian/apt-repo $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/librealsense.list"
+    echo "  sudo apt-get update"
+    echo "  sudo apt-get install -y librealsense2-utils librealsense2-dev"
+    echo ""
+    exit 0
+fi
+
+
 # === User Configuration ===
 read -p "Enter robot name (e.g. r1a001): " ROBOT_NAME
 read -p "Enter workspace name [default: r1_ws]: " WS_NAME
@@ -155,3 +185,47 @@ if ! grep -qF "${WS_SOURCE_LINE}" ~/.bashrc; then
 else
     echo "  Already present in ~/.bashrc, skipping."
 fi
+
+
+
+
+# Step 13: Install OLED display dependencies
+echo ""
+echo "=== [13/15] Installing OLED display dependencies ==="
+sudo apt-get install -y python3-pip python3-pil libjpeg-dev zlib1g-dev \
+    libfreetype6-dev liblcms2-dev libopenjp2-7 libtiff5
+pip3 install Pillow luma.oled
+echo "  OLED dependencies installed."
+
+# Step 14: Copy display script and logo to home directory
+echo ""
+echo "=== [14/15] Copying display script and logo ==="
+cp "$WS_DIR/src/r1_mini/.display.py" ~/.display.py
+cp "$WS_DIR/src/r1_mini/.3.png" ~/.3.png
+echo "  .display.py and .3.png copied to home directory."
+
+# Step 15: Create and enable OLED systemd service
+echo ""
+echo "=== [15/15] Setting up OLED display systemd service ==="
+USERNAME=$(whoami)
+sudo bash -c "cat > /etc/systemd/system/r1mini_display.service << EOF
+[Unit]
+Description=R1MINI OLED Display Service
+After=network.target i2c-1.device
+
+[Service]
+Type=simple
+User=$USERNAME
+WorkingDirectory=/home/$USERNAME/
+ExecStart=/usr/bin/python3 /home/$USERNAME/.display.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF"
+sudo systemctl daemon-reload
+sudo systemctl enable r1mini_display.service
+sudo systemctl start r1mini_display.service
+echo "  OLED display service enabled and started."
+echo "  Check status: sudo systemctl status r1mini_display.service"
