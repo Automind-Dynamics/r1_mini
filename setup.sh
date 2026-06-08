@@ -201,8 +201,8 @@ echo "  OLED dependencies installed."
 echo ""
 echo "=== [14/15] Copying display script and logo ==="
 cp "$WS_DIR/src/r1_mini/.display.py" ~/.display.py
-cp "$WS_DIR/src/r1_mini/.3.png" ~/.3.png
-echo "  .display.py and .3.png copied to home directory."
+cp "$WS_DIR/src/r1_mini/.automind.png" ~/.automind.png
+echo "  .display.py and .automind.png copied to home directory."
 
 # Step 15: Create and enable OLED systemd service
 echo ""
